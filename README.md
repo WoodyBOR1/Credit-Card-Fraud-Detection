@@ -66,4 +66,4 @@ Cette application est prête à être déployée sur **Streamlit Cloud** :
 - **Interface** : Streamlit
 
 ---
-*Projet réalisé dans le cadre d'un portfolio Data Science.*
+*Projet réalisé pour mon portfolio Data Science.*
