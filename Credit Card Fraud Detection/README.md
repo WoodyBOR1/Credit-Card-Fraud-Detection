@@ -37,3 +37,12 @@ Les modèles sont évalués avec l'**AUPRC (Area Under Precision-Recall Curve)**
 3. Lancer la modélisation : `python modeling_fraud.py`
 4. Tester une prédiction : `python predict_fraud.py`
 5. Lancer le dashboard : `panel serve dashboard.py`
+
+## Déploiement du Dashboard (GitHub Pages)
+Pour rendre le dashboard accessible en ligne :
+1. Sur GitHub, allez dans les **Settings** de votre dépôt.
+2. Section **Pages** (menu de gauche).
+3. Sous "Build and deployment" > "Branch", sélectionnez **main** et le dossier **/docs**.
+4. Cliquez sur **Save**.
+   
+Le dashboard sera bientôt disponible à l'adresse : `https://WoodyBOR1.github.io/Credit-Card-Fraud-Detection/`
