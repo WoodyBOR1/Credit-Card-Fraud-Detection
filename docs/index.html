@@ -1,95 +1,186 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="utf-8">
-    <title>Dashboard Détection de Fraude</title>
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
-    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-3.3.0.min.js"></script>
-    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.3.0.min.js"></script>
-    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.3.0.min.js"></script>
-    <script type="text/javascript" src="https://cdn.holoviz.org/panel/1.3.1/dist/panel.min.js"></script>
+    <title>🛡️ Dashboard Détection de Fraude</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-3.5.0.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.5.0.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.5.0.min.js"></script>
+    <script type="text/javascript" src="https://cdn.holoviz.org/panel/1.4.4/dist/panel.min.js"></script>
     <style>
-        body { margin: 0; padding: 0; font-family: roboto, sans-serif; }
-        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        :root {
+            --primary: #0072B5;
+            --bg: #f4f7f6;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg);
+        }
+
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #EAF0F6;
+            border-radius: 50%;
+            border-top: 5px solid var(--primary);
+            animation: spinner 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spinner {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #status {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        #log {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        #content {
+            padding: 0;
+        }
     </style>
 </head>
+
 <body>
-    <div id="loading">🚀 Chargement du Dashboard (Pyodide)... Merci de patienter quelques secondes.</div>
+    <div id="loading">
+        <div class="loader"></div>
+        <div id="status">Chargement du dashboard...</div>
+        <div id="log">Initialisation de Pyodide...</div>
+    </div>
     <div id="content"></div>
 
     <script type="text/javascript">
+        const statusEl = document.getElementById('status');
+        const logEl = document.getElementById('log');
+
+        function setStatus(status, log = "") {
+            statusEl.innerText = status;
+            logEl.innerText = log;
+            console.log(`[Status] ${status} ${log}`);
+        }
+
         async function main() {
-            let pyodide = await loadPyodide();
-            await pyodide.loadPackage("micropip");
-            const micropip = pyodide.pyimport("micropip");
-            await micropip.install(['pandas', 'hvplot', 'holoviews', 'panel']);
-            
-            await pyodide.runPythonAsync(`
+            try {
+                setStatus("🚀 Démarrage", "Chargement de la machine virtuelle Python...");
+                let pyodide = await loadPyodide();
+
+                setStatus("📦 Installation", "Téléchargement des bibliothèques (pandas, hvplot, panel)...");
+                await pyodide.loadPackage("micropip");
+                const micropip = pyodide.pyimport("micropip");
+                await micropip.install(['pandas', 'hvplot', 'holoviews', 'panel']);
+
+                setStatus("📊 Données", "Récupération du fichier creditcard_lite.csv...");
+                const response = await fetch('creditcard_lite.csv');
+                if (!response.ok) throw new Error("Fichier CSV introuvable sur le serveur.");
+                const buffer = await response.arrayBuffer();
+                pyodide.FS.writeFile('creditcard_lite.csv', new Uint8Array(buffer));
+
+                setStatus("✨ Rendu", "Génération de l'interface graphique...");
+                await pyodide.runPythonAsync(`
 import pandas as pd
 import panel as pn
 import hvplot.pandas
 import holoviews as hv
 
-pn.extension(design='material')
+pn.extension(design='material', sizing_mode='stretch_width')
 
-DATA_URL = 'creditcard_lite.csv'
+# Chargement sécurisé
+try:
+    df = pd.read_csv('creditcard_lite.csv')
+except Exception as e:
+    df = pd.DataFrame({'Erreur': [str(e)], 'Class': [0], 'Amount': [0], 'V1': [0], 'V2': [0]})
 
-def load_data():
-    try:
-        df = pd.read_csv(DATA_URL)
-        return df
-    except Exception as e:
-        return pd.DataFrame({'Error': [str(e)]})
-
-df = load_data()
-
-# Styles
-ACCENT_COLOR = "#0072B5"
+# Couleurs & Thème
 FRAUD_COLOR = "#D62728"
 NORMAL_COLOR = "#2CA02C"
 
-# Components
+# Calcul des métriques
 total = len(df)
 frauds = len(df[df['Class'] == 1])
 rate = (frauds / total) * 100 if total > 0 else 0
 
+# Composants UI
 metrics = pn.Row(
-    pn.indicators.Number(name="Transactions Totales", value=total, font_size='22pt'),
-    pn.indicators.Number(name="Frauduleuses", value=frauds, font_size='22pt', colors=[(1, FRAUD_COLOR)]),
-    pn.indicators.Number(name="Taux %", value=rate, font_size='22pt', format='{value:.3f}%'),
-    sizing_mode='stretch_width', justify_content='space-around'
+    pn.indicators.Number(name="Total Transactions", value=total, font_size='22pt'),
+    pn.indicators.Number(name="Fraudes Détectées", value=frauds, font_size='22pt', colors=[(1, FRAUD_COLOR)]),
+    pn.indicators.Number(name="Taux de Fraude", value=rate, font_size='22pt', format='{value:.3f}%'),
+    justify_content='space-around'
 )
 
 amount_plot = df.hvplot.hist(
     'Amount', bins=50, logy=True, title="Distribution des Montants (Log)",
-    color=NORMAL_COLOR, height=350, responsive=True
+    color=NORMAL_COLOR, height=400, responsive=True
 )
 
 scatter_plot = df.hvplot.scatter(
     x='V1', y='V2', c='Class', cmap=[NORMAL_COLOR, FRAUD_COLOR],
-    title="Analyse V1 / V2", height=350, responsive=True
+    title="Analyse Spatiale V1 / V2", height=400, responsive=True
 )
 
-var_select = pn.widgets.Select(name='Variable pour Analyse', options=['Amount', 'V1', 'V2', 'V17', 'V14'], value='V17')
+var_select = pn.widgets.Select(name='Comparer par variable :', options=['Amount', 'V1', 'V2', 'V17', 'V14'], value='V17')
 
 @pn.depends(var_select)
 def get_box(var):
-    return df.hvplot.box(y=var, by='Class', title=f"Profil {var}", height=350, responsive=True, color=[NORMAL_COLOR, FRAUD_COLOR])
+    return df.hvplot.box(y=var, by='Class', title=f"Distribution de {var} (Fraude vs Normal)", height=400, responsive=True, color=[NORMAL_COLOR, FRAUD_COLOR])
 
-main_content = pn.Column(
-    pn.pane.Markdown("# 🛡️ Surveillance des Fraudes Bancaires"),
+# Assemblage Final
+dashboard = pn.Column(
+    pn.pane.Markdown("# 🛡️ Système de Surveillance des Fraudes Bancaires"),
     metrics,
     pn.Row(amount_plot, scatter_plot),
-    pn.Row(var_select, get_box),
-    pn.pane.Markdown("### 🔍 Aperçu des Fraudes"),
-    pn.widgets.DataFrame(df[df['Class'] == 1].head(10), sizing_mode='stretch_width')
+    pn.Row(pn.Column(var_select, get_box)),
+    pn.pane.Markdown("### 🔍 Dernières Transactions Frauduleuses"),
+    pn.widgets.DataFrame(df[df['Class'] == 1].head(10), sizing_mode='stretch_width'),
+    max_width=1200, align='center', margin=(20, 20)
 )
 
-main_content.servable(target='content')
-            `);
-            document.getElementById('loading').style.display = 'none';
+dashboard.servable(target='content')
+                `);
+
+                document.getElementById('loading').style.opacity = '0';
+                setTimeout(() => document.getElementById('loading').style.display = 'none', 500);
+
+            } catch (err) {
+                setStatus("❌ Erreur de chargement", err.message);
+                document.querySelector('.loader').style.display = 'none';
+                console.error(err);
+            }
         }
         main();
     </script>
 </body>
+
 </html>
