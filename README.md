@@ -1,69 +1,48 @@
-# Projet analyser les transactions bancaires pour identifier des schémas de fraude
+# Portfolio Data Science : Analyse de Fraude Bancaire 💳
 
-##Bienvenue dans ce projet complet d'analyse de données (EDA) et de Machine Learning, conçu pour démontrer mes compétences en manipulation de données, visualisation et modélisation prédictive.
+Ce projet présente une Analyse Exploratoire des Données (EDA) sur un dataset de transactions par carte de crédit, avec pour objectif d'identifier des schémas de fraude.
 
-## Fonctionnalités du Projet
+## Objectifs du Projet
+- **Compréhension des données** : Analyse de la distribution des transactions et du déséquilibre des classes.
+- **Visualisation** : Création de graphiques clairs pour illustrer les différences entre transactions normales et frauduleuses.
+- **Dashboard Interactif** : Mise en œuvre d'un tableau de bord via Panel + Pyodide, déployable sur GitHub Pages.
 
-### Etape 1.  Analyse Marketing & Segmentation
-- **Objectif** : Identifier les segments de clients les plus rentables.
-- **Données** : Analyse démographique (Éducation, Statut Marital, Revenus) et comportementale (Campagnes, Dépenses).
-- **Outils** : Pandas, Seaborn, Matplotlib, Plotly.
+## Structure du Projet
+- `BDD/` : Contient le dataset original.
+- `eda_fraud.py` : Script Python pour générer les analyses statiques.
+- `modeling_fraud.py` : Entraînement des modèles ML (Random Forest, XGBoost, Isolation Forest).
+- `predict_fraud.py` : Script de démonstration de prédiction sur de nouvelles données.
+- `dashboard.py` : Code source du tableau de bord interactif.
+- `prep_lite_data.py` : Script de préparation des données pour le web.
+- `docs/` : Dossier contenant la version exportée du dashboard pour GitHub Pages.
+- `models/` : Dossier contenant les modèles entraînés (XGBoost) et les scalers.
+- `evaluation_plots/` : Courbes PR et matrices de confusion.
 
-### Etape 2.Détection de Fraude Bancaire (IA)
-- **Objectif** : Prédire les transactions suspectes en temps réel.
-- **Machine Learning** : Modèle **Random Forest Classifier** entraîné sur des schémas de fraude complexes.
-- **Interactive** : Simulateur de prédiction intégré pour tester des scénarios.
-- **Outils** : Scikit-learn, NumPy, Joblib.
+## Technologies
+- **Analyse** : Pandas, NumPy, Seaborn, Matplotlib.
+- **Machine Learning** : Scikit-learn, XGBoost, Imbalanced-learn (SMOTE/Stratification).
+- **Dashboard** : Panel, Holoviews, HvPlot, Pyodide/PyScript.
 
-### Etape 3. Dashboard Interactif (Streamlit)
-- Interface utilisateur fluide et interactive.
-- Filtres en temps réel.
-- Visualisations dynamiques avec Plotly.
+## Modélisation ML
+Nous avons testé trois approches :
+1. **Isolation Forest** : Détection d'anomalies (non supervisé).
+2. **Random Forest** : Classification avec poids de classe équilibrés.
+3. **XGBoost** : Classification avec pondération des classes positives (meilleurs résultats sur l'AUPRC).
 
-## Installation Locale
+Les modèles sont évalués avec l'**AUPRC (Area Under Precision-Recall Curve)**, car le dataset est extrêmement déséquilibré.
 
-1. **Cloner le projet** :
-   ```bash
-   git clone https://github.com/VOTRE_NOM/projet-data-science.git
-   cd projet-data-science
-   ```
+## Comment exécuter
+1. Installer les dépendances : `pip install pandas matplotlib seaborn panel scikit-learn xgboost joblib`
+2. Lancer l'EDA : `python eda_fraud.py`
+3. Lancer la modélisation : `python modeling_fraud.py`
+4. Tester une prédiction : `python predict_fraud.py`
+5. Lancer le dashboard : `panel serve dashboard.py`
 
-2. **Créer un environnement virtuel** (Recommandé) :
-   ```bash
-   py -m venv .venv
-   .\.venv\Scripts\activate
-   ```
-
-3. **Installer les dépendances** :
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Préparer les données et le modèle** :
-   ```bash
-   py EDA/marketing_eda.py
-   py EDA/bank_eda.py
-   py EDA/train_fraud_model.py
-   ```
-
-5. **Lancer l'application** :
-   ```bash
-   streamlit run app.py
-   ```
-
-## Déploiement
-
-Cette application est prête à être déployée sur **Streamlit Cloud** :
-1. Poussez le code sur GitHub.
-2. Connectez votre dépôt sur [share.streamlit.io](https://share.streamlit.io).
-3. Point d'entrée : `app.py`.
-
-## Tech Stack
-- **Langage** : Python 3.14+
-- **Manipulation** : Pandas, NumPy
-- **Visualisation** : Seaborn, Matplotlib, Plotly
-- **Machine Learning** : Scikit-Learn
-- **Interface** : Streamlit
-
----
-*Projet réalisé pour mon portfolio Data Science.*
+## Déploiement du Dashboard (GitHub Pages)
+Pour rendre le dashboard accessible en ligne :
+1. Sur GitHub, allez dans les **Settings** de votre dépôt.
+2. Section **Pages** (menu de gauche).
+3. Sous "Build and deployment" > "Branch", sélectionnez **main** et le dossier **/docs**.
+4. Cliquez sur **Save**.
+   
+Le dashboard sera bientôt disponible à l'adresse : `https://WoodyBOR1.github.io/Credit-Card-Fraud-Detection/`

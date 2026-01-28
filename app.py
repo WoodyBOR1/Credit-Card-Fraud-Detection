@@ -1,98 +1,80 @@
-import streamlit as st
 import pandas as pd
-import numpy as np
-import plotly.express as px
-import os
-import joblib
+import panel as pn
+import hvplot.pandas
+import holoviews as hv
 
-# Page configuration
-st.set_page_config(page_title="Data Science Portfolio", layout="wide", page_icon="📊")
+pn.extension(design='material')
 
-# Custom CSS for premium look
-st.markdown("""
-<style>
-    .main {
-        background-color: #f8f9fa;
-    }
-    .stMetric {
-        background-color: #ffffff;
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-</style>
-""", unsafe_allow_html=True)
+# Configuration for Pyodide: we use the lite version relative to the app
+DATA_URL = 'creditcard_lite.csv'
 
-# sidebar navigation
-st.sidebar.title("🚀 Navigation")
-page = st.sidebar.radio("Aller à", ["Acceuil", "Analyse Marketing", "Détection de Fraude"])
+def load_data():
+    try:
+        df = pd.read_csv(DATA_URL)
+        return df
+    except Exception as e:
+        return pd.DataFrame({'Error': [f"Could not load data: {e}"]})
 
-# Helper function to load data safely
-@st.cache_data
-def load_data(path, sep=','):
-    if os.path.exists(path):
-        return pd.read_csv(path, sep=sep)
-    return None
+df = load_data()
 
-if page == "Acceuil":
-    st.title("📊 Portfolio Data Science & ML")
-    st.markdown("""
-    Bienvenue sur mon application de démonstration. Ce projet regroupe deux analyses majeures :
-    
-    1.  **Analyse Marketing** : Segmentation des clients et efficacité des campagnes.
-    2.  **Détection de Fraude** : Utilisation du **Machine Learning (Random Forest)** pour identifier les transactions à risque.
-    
-    *Déployé sur Streamlit Cloud via GitHub.*
-    """)
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.info("💡 **Marketing** : Explorez comment les données démographiques influencent les habitudes d'achat.")
-    with col2:
-        st.warning("🛡️ **Banque** : Testez notre simulateur d'IA pour prédire les fraudes bancaires.")
+# --- Components ---
 
-elif page == "Analyse Marketing":
-    st.title("🎯 Insights Marketing")
-    df_m = load_data('EDA/marketing/cleaned_marketing_data.csv')
-    
-    if df_m is not None:
-        st.subheader("Distribution des Dépenses par Éducation")
-        fig = px.box(df_m, x="Education", y="Total_Spending", color="Education", points="all")
-        st.plotly_chart(fig, use_container_width=True)
-        
-        st.subheader("Réponses aux Campagnes")
-        camp_cols = ['AcceptedCmp1', 'AcceptedCmp2', 'AcceptedCmp3', 'AcceptedCmp4', 'AcceptedCmp5', 'Response']
-        camp_sums = df_m[camp_cols].sum().reset_index()
-        fig_bar = px.bar(camp_sums, x='index', y=0, labels={'index': 'Campagne', '0': 'Acceptations'}, color='0')
-        st.plotly_chart(fig_bar, use_container_width=True)
-    else:
-        st.error("Données marketing non trouvées. Veuillez exécuter le pipeline localement.")
+title = pn.pane.Markdown("""
+# Credit Card Fraud Detection Dashboard
+### Exploratory Data Analysis & Pattern Identification
+""", styles={'text-align': 'center'})
 
-elif page == "Détection de Fraude":
-    st.title("🛡️ Intelligence Artificielle - Fraude")
-    df_b = load_data('EDA/bank/cleaned_bank_data.csv')
-    
-    if df_b is not None:
-        st.subheader("Simulateur de Prediction (IA)")
-        
-        col_m1, col_m2 = st.columns([1, 1])
-        with col_m1:
-            with st.form("fraud_form"):
-                amt = st.number_input("Montant (€)", value=100.0)
-                hour = st.slider("Heure", 0, 23, 12)
-                cat = st.selectbox("Catégorie", options=['Groceries', 'Electronics', 'Travel', 'Health'])
-                submit = st.form_submit_button("Analyser")
-                
-                if submit:
-                    if amt > 500 or hour in [2,3,4]:
-                        st.error(f"⚠️ Alerte Fraude Suspectée ! (Logic Sim)")
-                    else:
-                        st.success("✅ Transaction Validée.")
-        
-        with col_m2:
-            st.write("**Importance des facteurs de détection**")
-            if os.path.exists('EDA/bank/results/feature_importance.csv'):
-                fi = pd.read_csv('EDA/bank/results/feature_importance.csv')
-                st.plotly_chart(px.bar(fi, x='Importance', y='Feature', orientation='h'), use_container_width=True)
-    else:
-        st.error("Données bancaires non trouvées.")
+# Metrics
+total_trans = df.shape[0]
+fraud_count = df[df['Class'] == 1].shape[0]
+fraud_rate = (fraud_count / total_trans) * 100
+
+metrics = pn.Row(
+    pn.indicators.Number(name="Total Transactions", value=total_trans, format='{value}', colors=[(100, 'black')], font_size='24pt'),
+    pn.indicators.Number(name="Fraudulent", value=fraud_count, format='{value}', colors=[(1, 'red')], font_size='24pt'),
+    pn.indicators.Number(name="Fraud Rate (%)", value=fraud_rate, format='{value:.2f}%', colors=[(5, 'orange')], font_size='24pt'),
+    sizing_mode='stretch_width', justify_content='center'
+)
+
+# Plots
+amount_hist = df.hvplot.hist(
+    y='Amount', by='Class', bins=50, alpha=0.5, 
+    title='Transaction Amount Distribution (Log Scale)', 
+    logy=True, height=400, responsive=True, color=['#3498db', '#e74c3c']
+)
+
+scatter_v1_v2 = df.hvplot.scatter(
+    x='V1', y='V2', c='Class', cmap=['#3498db', '#e74c3c'], 
+    title='V1 vs V2 Clusters', alpha=0.6,
+    height=400, responsive=True
+)
+
+# Variable Analysis Selector
+var_select = pn.widgets.Select(name='Variable Select', options=['Amount', 'Time'] + [f'V{i}' for i in range(1, 29)])
+
+@pn.depends(var_select)
+def plot_variable(var):
+    return df.hvplot.box(y=var, by='Class', title=f'{var} Distribution by Class', 
+                         height=400, responsive=True, color=['#3498db', '#e74c3c'])
+
+# Layout
+sidebar = [
+    pn.pane.Markdown("### Configuration"),
+    var_select
+]
+
+main_content = pn.Column(
+    metrics,
+    pn.Row(amount_hist, scatter_v1_v2),
+    pn.Row(plot_variable),
+    pn.pane.Markdown("### Data Sample (Frauds)"),
+    pn.widgets.DataFrame(df[df['Class'] == 1].head(20), sizing_mode='stretch_width')
+)
+
+template = pn.template.MaterialTemplate(
+    title='Credit Card Fraud EDA',
+    sidebar=sidebar,
+    main=main_content
+)
+
+template.servable()
