@@ -1,9 +1,10 @@
 # 🛡️ Détection de Fraude sur Carte Bancaire
 
 ## 📝 Présentation du Projet
-Ce projet est une démonstration complète d'un pipeline de **Data Science** appliqué à la sécurité financière. L'objectif est d'identifier les transactions frauduleuses parmi un dataset de transactions anonymisées, tout en gérant le défi majeur du **déséquilibre des classes** (0.17% de fraudes).
+Analyse avancée d’un dataset fortement déséquilibré pour identifier les comportements frauduleux.
+Création de visualisations exploitables pour optimiser la détection d’anomalies et guider les décisions métier.
 
-Le projet inclut une analyse exploratoire, l'entraînement de modèles de Machine Learning performants et le déploiement d'un dashboard interactif en mode **serverless** sur GitHub Pages.
+👉 Projet basé sur le dataset Kaggle : [Voir ma page GitHub](https://github.com/WoodyBOR1/Credit-Card-Fraud-Detection)
 
 ---
 
