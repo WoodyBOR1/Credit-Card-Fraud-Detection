@@ -35,8 +35,7 @@ pip-selfcheck.json
 # Data & Models (Heavy files)
 BDD/
 *.csv
-!creditcard_lite.csv
-docs/creditcard_lite.csv
+!docs/creditcard_lite.csv
 models/
 *.pkl
 *.joblib
