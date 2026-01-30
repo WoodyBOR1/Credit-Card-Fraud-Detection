@@ -4,21 +4,25 @@
 <head>
     <meta charset="utf-8">
     <title>🛡️ Dashboard Détection de Fraude</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Scripts CDN stables -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
-    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-3.5.0.min.js"></script>
-    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.5.0.min.js"></script>
-    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.5.0.min.js"></script>
-    <script type="text/javascript" src="https://cdn.holoviz.org/panel/1.4.4/dist/panel.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.6.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.6.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.holoviz.org/panel/1.5.4/dist/panel.min.js"></script>
+
     <style>
         :root {
             --primary: #0072B5;
-            --bg: #f4f7f6;
+            --bg: #f8fafc;
         }
 
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg);
         }
 
@@ -28,26 +32,25 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
-            transition: opacity 0.5s ease;
+            z-index: 9999;
         }
 
-        .loader {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #EAF0F6;
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid var(--primary);
             border-radius: 50%;
-            border-top: 5px solid var(--primary);
-            animation: spinner 1s linear infinite;
+            animation: spin 1s linear infinite;
             margin-bottom: 20px;
         }
 
-        @keyframes spinner {
+        @keyframes spin {
             0% {
                 transform: rotate(0deg);
             }
@@ -57,58 +60,77 @@
             }
         }
 
+        #status-container {
+            text-align: center;
+        }
+
         #status {
+            font-size: 1.25rem;
             font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
         }
 
         #log {
-            color: #888;
-            font-size: 0.9em;
+            font-size: 0.875rem;
+            color: #64748b;
+            font-family: monospace;
         }
 
         #content {
-            padding: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
+        }
+
+        #content.visible {
+            opacity: 1;
         }
     </style>
 </head>
 
 <body>
     <div id="loading">
-        <div class="loader"></div>
-        <div id="status">Chargement du dashboard...</div>
-        <div id="log">Initialisation de Pyodide...</div>
+        <div class="spinner"></div>
+        <div id="status-container">
+            <div id="status">Initialisation du Système...</div>
+            <div id="log">Chargement de l'environnement Python...</div>
+        </div>
     </div>
+
     <div id="content"></div>
 
     <script type="text/javascript">
         const statusEl = document.getElementById('status');
         const logEl = document.getElementById('log');
 
-        function setStatus(status, log = "") {
+        function updateStatus(status, log = "") {
             statusEl.innerText = status;
             logEl.innerText = log;
-            console.log(`[Status] ${status} ${log}`);
+            console.log(`[App] ${status} ${log}`);
         }
 
         async function main() {
             try {
-                setStatus("🚀 Démarrage", "Chargement de la machine virtuelle Python...");
+                updateStatus("🚀 Activation", "Chargement de Pyodide...");
                 let pyodide = await loadPyodide();
 
-                setStatus("📦 Installation", "Téléchargement des bibliothèques (pandas, hvplot, panel)...");
+                updateStatus("📦 Dépendances", "Installation de Pandas, HvPlot et Panel...");
                 await pyodide.loadPackage("micropip");
                 const micropip = pyodide.pyimport("micropip");
-                await micropip.install(['pandas', 'hvplot', 'holoviews', 'panel']);
 
-                setStatus("📊 Données", "Récupération du fichier creditcard_lite.csv...");
-                const response = await fetch('creditcard_lite.csv');
-                if (!response.ok) throw new Error("Fichier CSV introuvable sur le serveur.");
-                const buffer = await response.arrayBuffer();
-                pyodide.FS.writeFile('creditcard_lite.csv', new Uint8Array(buffer));
+                // Installation silencieuse des modules
+                await pyodide.runPythonAsync(`
+                    import micropip
+                    await micropip.install(['pandas', 'hvplot', 'holoviews', 'panel'])
+                `);
 
-                setStatus("✨ Rendu", "Génération de l'interface graphique...");
+                updateStatus("📥 Données", "Récupération du dataset lite...");
+                const csvResponse = await fetch('creditcard_lite.csv');
+                if (!csvResponse.ok) throw new Error("Impossible de charger le fichier .csv");
+                const csvData = await csvResponse.arrayBuffer();
+                pyodide.FS.writeFile('creditcard_lite.csv', new Uint8Array(csvData));
+
+                updateStatus("🎨 Interface", "Rendu graphique en cours...");
                 await pyodide.runPythonAsync(`
 import pandas as pd
 import panel as pn
@@ -117,65 +139,63 @@ import holoviews as hv
 
 pn.extension(design='material', sizing_mode='stretch_width')
 
-# Chargement sécurisé
-try:
-    df = pd.read_csv('creditcard_lite.csv')
-except Exception as e:
-    df = pd.DataFrame({'Erreur': [str(e)], 'Class': [0], 'Amount': [0], 'V1': [0], 'V2': [0]})
+# Chargement
+df = pd.read_csv('creditcard_lite.csv')
 
-# Couleurs & Thème
-FRAUD_COLOR = "#D62728"
-NORMAL_COLOR = "#2CA02C"
+# --- Design ---
+ACCENT = "#0072B5"
+FRAUD = "#D62728"
+NORMAL = "#2CA02C"
 
-# Calcul des métriques
+# --- Widgets & Logic ---
 total = len(df)
 frauds = len(df[df['Class'] == 1])
 rate = (frauds / total) * 100 if total > 0 else 0
 
-# Composants UI
-metrics = pn.Row(
-    pn.indicators.Number(name="Total Transactions", value=total, font_size='22pt'),
-    pn.indicators.Number(name="Fraudes Détectées", value=frauds, font_size='22pt', colors=[(1, FRAUD_COLOR)]),
-    pn.indicators.Number(name="Taux de Fraude", value=rate, font_size='22pt', format='{value:.3f}%'),
-    justify_content='space-around'
+indicator_row = pn.Row(
+    pn.indicators.Number(name="Transactions", value=total, font_size='22pt'),
+    pn.indicators.Number(name="Cas de Fraude", value=frauds, font_size='22pt', colors=[(1, FRAUD)]),
+    pn.indicators.Number(name="Taux (%)", value=rate, font_size='22pt', format='{value:.3f}%'),
+    justify_content='space-around', margin=(10, 0)
 )
 
-amount_plot = df.hvplot.hist(
-    'Amount', bins=50, logy=True, title="Distribution des Montants (Log)",
-    color=NORMAL_COLOR, height=400, responsive=True
+amount_hist = df.hvplot.hist(
+    'Amount', bins=40, logy=True, height=400, color=NORMAL, alpha=0.7,
+    title="Analyse des Montants (Log Scale)", xlabel="Montant ($)", ylabel="Volume"
 )
 
-scatter_plot = df.hvplot.scatter(
-    x='V1', y='V2', c='Class', cmap=[NORMAL_COLOR, FRAUD_COLOR],
-    title="Analyse Spatiale V1 / V2", height=400, responsive=True
+scatter_v1_v2 = df.hvplot.scatter(
+    x='V1', y='V2', c='Class', cmap=[NORMAL, FRAUD],
+    title="Clusters V1 vs V2", height=400, alpha=0.5, size=45
 )
 
-var_select = pn.widgets.Select(name='Comparer par variable :', options=['Amount', 'V1', 'V2', 'V17', 'V14'], value='V17')
+var_select = pn.widgets.Select(name='Variable à inspecter :', options=['V14', 'V17', 'V12', 'V10', 'Amount'], value='V17')
 
 @pn.depends(var_select)
-def get_box(var):
-    return df.hvplot.box(y=var, by='Class', title=f"Distribution de {var} (Fraude vs Normal)", height=400, responsive=True, color=[NORMAL_COLOR, FRAUD_COLOR])
+def box_plot(var):
+    return df.hvplot.box(y=var, by='Class', height=400, color=[NORMAL, FRAUD], title=f"Boxplot de {var} (Normal vs Fraude)")
 
-# Assemblage Final
-dashboard = pn.Column(
-    pn.pane.Markdown("# 🛡️ Système de Surveillance des Fraudes Bancaires"),
-    metrics,
-    pn.Row(amount_plot, scatter_plot),
-    pn.Row(pn.Column(var_select, get_box)),
-    pn.pane.Markdown("### 🔍 Dernières Transactions Frauduleuses"),
-    pn.widgets.DataFrame(df[df['Class'] == 1].head(10), sizing_mode='stretch_width'),
-    max_width=1200, align='center', margin=(20, 20)
+# --- Layout ---
+layout = pn.Column(
+    pn.pane.Markdown("# 🔍 Détection de Fraude par Carte Bancaire", styles={'color': ACCENT, 'font-size': '24pt'}),
+    indicator_row,
+    pn.Row(amount_hist, scatter_v1_v2),
+    pn.Row(pn.Column("### Isolation des Variables", var_select, box_plot)),
+    pn.pane.Markdown("### 📄 Échantillon des Transactions Frauduleuses"),
+    pn.widgets.DataFrame(df[df['Class'] == 1].head(12), sizing_mode='stretch_width', height=300),
+    max_width=1100, align='center', margin=(15, 15)
 )
 
-dashboard.servable(target='content')
+layout.servable(target='content')
                 `);
 
-                document.getElementById('loading').style.opacity = '0';
-                setTimeout(() => document.getElementById('loading').style.display = 'none', 500);
+                // Finalisation
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').classList.add('visible');
 
             } catch (err) {
-                setStatus("❌ Erreur de chargement", err.message);
-                document.querySelector('.loader').style.display = 'none';
+                updateStatus("❌ Échec critique", err.message);
+                document.querySelector('.spinner').style.borderTopColor = 'red';
                 console.error(err);
             }
         }
