@@ -6,12 +6,12 @@
     <title>🛡️ Dashboard Détection de Fraude</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Scripts CDN stables -->
+    <!-- Scripts CDN stables (Panel 1.4.4 + Bokeh 3.4.1) -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
-    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.1.min.js"></script>
-    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.6.1.min.js"></script>
-    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.6.1.min.js"></script>
-    <script type="text/javascript" src="https://cdn.holoviz.org/panel/1.5.4/dist/panel.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-3.4.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.holoviz.org/panel/1.4.4/dist/panel.min.js"></script>
 
     <style>
         :root {
@@ -32,7 +32,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.98);
+            background: white;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -41,10 +41,10 @@
         }
 
         .spinner {
-            width: 60px;
-            height: 60px;
-            border: 6px solid #f3f3f3;
-            border-top: 6px solid var(--primary);
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
@@ -60,30 +60,9 @@
             }
         }
 
-        #status-container {
-            text-align: center;
-        }
-
         #status {
-            font-size: 1.25rem;
             font-weight: 600;
             color: #1e293b;
-            margin-bottom: 0.5rem;
-        }
-
-        #log {
-            font-size: 0.875rem;
-            color: #64748b;
-            font-family: monospace;
-        }
-
-        #content {
-            opacity: 0;
-            transition: opacity 0.5s ease-in;
-        }
-
-        #content.visible {
-            opacity: 1;
         }
     </style>
 </head>
@@ -91,46 +70,31 @@
 <body>
     <div id="loading">
         <div class="spinner"></div>
-        <div id="status-container">
-            <div id="status">Initialisation du Système...</div>
-            <div id="log">Chargement de l'environnement Python...</div>
-        </div>
+        <div id="status">Chargement du Système de Détection...</div>
     </div>
 
     <div id="content"></div>
 
     <script type="text/javascript">
-        const statusEl = document.getElementById('status');
-        const logEl = document.getElementById('log');
-
-        function updateStatus(status, log = "") {
-            statusEl.innerText = status;
-            logEl.innerText = log;
-            console.log(`[App] ${status} ${log}`);
-        }
-
         async function main() {
             try {
-                updateStatus("🚀 Activation", "Chargement de Pyodide...");
                 let pyodide = await loadPyodide();
-
-                updateStatus("📦 Dépendances", "Installation de Pandas, HvPlot et Panel...");
                 await pyodide.loadPackage("micropip");
                 const micropip = pyodide.pyimport("micropip");
 
-                // Installation silencieuse des modules
-                await pyodide.runPythonAsync(`
-                    import micropip
-                    await micropip.install(['pandas', 'hvplot', 'holoviews', 'panel'])
-                `);
+                // Installation avec versions verrouillées pour éviter les erreurs d'import Bokeh
+                await micropip.install([
+                    'bokeh==3.4.1',
+                    'panel==1.4.4',
+                    'pandas',
+                    'hvplot',
+                    'holoviews'
+                ]);
 
-                updateStatus("📥 Données", "Récupération du dataset lite...");
                 const csvResponse = await fetch('creditcard_lite.csv');
-                if (!csvResponse.ok) throw new Error("Impossible de charger le fichier .csv");
                 const csvData = await csvResponse.arrayBuffer();
                 pyodide.FS.writeFile('creditcard_lite.csv', new Uint8Array(csvData));
 
-                updateStatus("🎨 Interface", "Rendu graphique en cours...");
                 await pyodide.runPythonAsync(`
 import pandas as pd
 import panel as pn
@@ -147,55 +111,46 @@ ACCENT = "#0072B5"
 FRAUD = "#D62728"
 NORMAL = "#2CA02C"
 
-# --- Widgets & Logic ---
+# --- Calculs ---
 total = len(df)
 frauds = len(df[df['Class'] == 1])
 rate = (frauds / total) * 100 if total > 0 else 0
 
+# --- UI ---
 indicator_row = pn.Row(
     pn.indicators.Number(name="Transactions", value=total, font_size='22pt'),
-    pn.indicators.Number(name="Cas de Fraude", value=frauds, font_size='22pt', colors=[(1, FRAUD)]),
+    pn.indicators.Number(name="Fraudes", value=frauds, font_size='22pt', colors=[(1, FRAUD)]),
     pn.indicators.Number(name="Taux (%)", value=rate, font_size='22pt', format='{value:.3f}%'),
-    justify_content='space-around', margin=(10, 0)
+    justify_content='space-around'
 )
 
 amount_hist = df.hvplot.hist(
-    'Amount', bins=40, logy=True, height=400, color=NORMAL, alpha=0.7,
-    title="Analyse des Montants (Log Scale)", xlabel="Montant ($)", ylabel="Volume"
+    'Amount', bins=40, logy=True, height=350, color=NORMAL, alpha=0.7,
+    title="Analyse des Montants (Log Scale)"
 )
 
 scatter_v1_v2 = df.hvplot.scatter(
     x='V1', y='V2', c='Class', cmap=[NORMAL, FRAUD],
-    title="Clusters V1 vs V2", height=400, alpha=0.5, size=45
+    title="Analyse Spatiale V1/V2", height=350, alpha=0.5
 )
 
-var_select = pn.widgets.Select(name='Variable à inspecter :', options=['V14', 'V17', 'V12', 'V10', 'Amount'], value='V17')
-
-@pn.depends(var_select)
-def box_plot(var):
-    return df.hvplot.box(y=var, by='Class', height=400, color=[NORMAL, FRAUD], title=f"Boxplot de {var} (Normal vs Fraude)")
-
-# --- Layout ---
+# Assemblage
 layout = pn.Column(
-    pn.pane.Markdown("# 🔍 Détection de Fraude par Carte Bancaire", styles={'color': ACCENT, 'font-size': '24pt'}),
+    pn.pane.Markdown("# 🛡️ Dashboard de Détection de Fraude", styles={'color': ACCENT, 'font-size': '24pt'}),
     indicator_row,
     pn.Row(amount_hist, scatter_v1_v2),
-    pn.Row(pn.Column("### Isolation des Variables", var_select, box_plot)),
     pn.pane.Markdown("### 📄 Échantillon des Transactions Frauduleuses"),
-    pn.widgets.DataFrame(df[df['Class'] == 1].head(12), sizing_mode='stretch_width', height=300),
-    max_width=1100, align='center', margin=(15, 15)
+    pn.widgets.DataFrame(df[df['Class'] == 1].head(10), sizing_mode='stretch_width', height=300),
+    max_width=1100, align='center'
 )
 
 layout.servable(target='content')
                 `);
 
-                // Finalisation
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('content').classList.add('visible');
 
             } catch (err) {
-                updateStatus("❌ Échec critique", err.message);
-                document.querySelector('.spinner').style.borderTopColor = 'red';
+                document.getElementById('status').innerText = "❌ Erreur : " + err.message;
                 console.error(err);
             }
         }

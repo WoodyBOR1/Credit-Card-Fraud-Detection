@@ -1,70 +1,73 @@
 # 🛡️ Détection de Fraude sur Carte Bancaire
 
 [![Dashboard](https://img.shields.io/badge/Live-Dashboard-blue?style=for-the-badge&logo=github)](https://WoodyBOR1.github.io/Credit-Card-Fraud-Detection/)
-[![Python](https://img.shields.io/badge/Python-3.9+-yellow?style=for-the-badge&logo=python)](https://www.python.org/)
-[![Machine Learning](https://img.shields.io/badge/ML-XGBoost%20%7C%20Random%20Forest-orange?style=for-the-badge)](https://xgboost.readthedocs.io/)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Status](https://img.shields.io/badge/Status-Stable-success?style=for-the-badge)](https://github.com/WoodyBOR1/Credit-Card-Fraud-Detection/)
 
-## 🚀 Présentation du Projet
-Ce projet est une solution complète de **Data Science** pour la détection de transactions frauduleuses. Il couvre l'ensemble du pipeline, de l'**Analyse Exploratoire des Données (EDA)** à la mise en production via un **Dashboard interactif (Panel + Pyodide)**.
+## 📝 Présentation du Projet
+Ce projet est une démonstration complète d'un pipeline de **Data Science** appliqué à la sécurité financière. L'objectif est d'identifier les transactions frauduleuses parmi un dataset de transactions anonymisées, tout en gérant le défi majeur du **déséquilibre des classes** (0.17% de fraudes).
 
-Le dataset utilisé contient des transactions effectuées par des titulaires de cartes européennes, où les fraudes ne représentent que **0.172%** de l'ensemble des données, posant un défi majeur de classification déséquilibrée.
-
----
-
-## 📊 Fonctionnalités Clés
-- **EDA Approfondie** : Analyse de la distribution des montants, du temps et des variables PCA (V1-V28).
-- **Modélisation ML Avancée** :
-  - **Isolation Forest** (Non supervisé).
-  - **Random Forest** (Poids de classes ajustés).
-  - **XGBoost** (Optimisé pour l'AUPRC).
-- **Dashboard Interactif** : Une interface web tournant entièrement dans le navigateur (serverless) pour explorer les données en temps réel.
-- **Prédiction en Temps Réel** : Script prêt à l'emploi pour évaluer de nouvelles transactions.
+Le projet inclut une analyse exploratoire, l'entraînement de modèles de Machine Learning performants et le déploiement d'un dashboard interactif en mode **serverless** sur GitHub Pages.
 
 ---
 
-## 🛠️ Installation et Utilisation
+## 🛠️ Installation et Dépendances
 
-### 1. Cloner le projet
+### Prérequis
+- Python 3.10 ou supérieur
+- Pip (gestionnaire de paquets)
+
+### Installation locale
+1. **Cloner le projet** :
+   ```bash
+   git clone https://github.com/WoodyBOR1/Credit-Card-Fraud-Detection.git
+   cd Credit-Card-Fraud-Detection
+   ```
+
+2. **Installer les dépendances** :
+   ```bash
+   pip install pandas matplotlib seaborn panel scikit-learn xgboost joblib hvplot holoviews
+   ```
+
+---
+
+## 🚀 Utilisation
+
+### 1. Analyse Exploratoire (EDA)
+Le script `eda_fraud.py` génère des graphiques statiques dans le dossier `eda_plots/` pour comprendre les corrélations et les distributions des variables.
 ```bash
-git clone https://github.com/WoodyBOR1/Credit-Card-Fraud-Detection.git
-cd Credit-Card-Fraud-Detection
+python eda_fraud.py
 ```
 
-### 2. Installer les dépendances
+### 2. Modélisation Machine Learning
+Le script `modeling_fraud.py` entraîne plusieurs modèles (Isolation Forest, Random Forest, et **XGBoost**). Il sauvegarde le meilleur modèle dans le dossier `models/` et génère des courbes de précision-rappel dans `evaluation_plots/`.
 ```bash
-pip install -r requirements.txt
+python modeling_fraud.py
 ```
-*Note : Si le fichier n'est pas présent, utilisez :*
-`pip install pandas matplotlib seaborn panel scikit-learn xgboost joblib hvplot holoviews`
 
-### 3. Exécuter les composants
-- **Générer l'analyse statique** : `python eda_fraud.py`
-- **Entraîner les modèles** : `python modeling_fraud.py`
-- **Lancer le dashboard localement** : `panel serve dashboard.py --show`
-
----
-
-## 🌐 Déploiement GitHub Pages
-Le dashboard est automatiquement déployé via le dossier `docs/`. 
-Si vous souhaitez le redéployer sur votre propre compte :
-1. Allez dans **Settings** > **Pages**.
-2. Source : **Deploy from a branch**.
-3. Branch : **main** / Folder : **/docs**.
+### 3. Dashboard Interactif
+Le dashboard est conçu pour être visionné directement sur GitHub Pages, mais vous pouvez aussi le lancer localement :
+```bash
+panel serve dashboard.py --show
+```
 
 ---
 
-## 📈 Résultats et Évaluation
-Étant donné le fort déséquilibre des classes, nous utilisons l'**AUPRC (Area Under Precision-Recall Curve)** comme métrique principale :
-- **XGBoost** a montré la meilleure performance pour identifier les fraudes tout en minimisant les faux positifs.
-- Les visualisations incluses dans le dashboard permettent d'isoler rapidement les variables les plus discriminantes (comme V17, V14 et V12).
+## 📊 Analyse des Résultats
+- **Métrique principale** : AUPRC (Area Under Precision-Recall Curve), car la précision est plus cruciale que l'accuracy sur des données déséquilibrées.
+- **Modèle retenu** : XGBoost, offrant le meilleur compromis entre détection des fraudes et limitation des faux positifs.
+- **Variables discriminantes** : Les graphiques d'analyse montrent que les variables issues de la PCA (V17, V14, V12) sont les plus révélatrices des comportements frauduleux.
 
 ---
 
-## 📁 Structure du Dépôt
-- `docs/` : Contient le dashboard web (Index.html + Dataset lite).
+## 📁 Structure du Projet
+- `docs/` : Version web du dashboard (HTML/JS + dataset lite).
 - `models/` : Modèles entraînés et scalers sérialisés.
-- `eda_plots/` & `evaluation_plots/` : Graphiques d'analyse et de performance.
-- `eda_fraud.py`, `modeling_fraud.py`, `dashboard.py` : Scripts sources.
+- `eda_plots/` : Graphiques d'analyse exploratoire.
+- `evaluation_plots/` : Matrices de confusion et courbes de performance.
+- `dashboard.py` : Source du tableau de bord interactif.
+- `modeling_fraud.py` : Pipeline d'entraînement ML.
 
 ---
-**Développé avec ❤️ par Woody B.**
+**Développé par Woody B.** 🚀  
+*Ce projet fait partie d'un portfolio de Data Science.*
