@@ -2,8 +2,10 @@ pandas
 numpy
 matplotlib
 seaborn
-streamlit
+panel
 scikit-learn
+xgboost
 joblib
-plotly
-scipy
+hvplot
+holoviews
+bokeh
