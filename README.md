@@ -1,48 +1,70 @@
-# Portfolio Data Science : Analyse de Fraude Bancaire 💳
+# 🛡️ Détection de Fraude sur Carte Bancaire
 
-Ce projet présente une Analyse Exploratoire des Données (EDA) sur un dataset de transactions par carte de crédit, avec pour objectif d'identifier des schémas de fraude.
+[![Dashboard](https://img.shields.io/badge/Live-Dashboard-blue?style=for-the-badge&logo=github)](https://WoodyBOR1.github.io/Credit-Card-Fraud-Detection/)
+[![Python](https://img.shields.io/badge/Python-3.9+-yellow?style=for-the-badge&logo=python)](https://www.python.org/)
+[![Machine Learning](https://img.shields.io/badge/ML-XGBoost%20%7C%20Random%20Forest-orange?style=for-the-badge)](https://xgboost.readthedocs.io/)
 
-## Objectifs du Projet
-- **Compréhension des données** : Analyse de la distribution des transactions et du déséquilibre des classes.
-- **Visualisation** : Création de graphiques clairs pour illustrer les différences entre transactions normales et frauduleuses.
-- **Dashboard Interactif** : Mise en œuvre d'un tableau de bord via Panel + Pyodide, déployable sur GitHub Pages.
+## 🚀 Présentation du Projet
+Ce projet est une solution complète de **Data Science** pour la détection de transactions frauduleuses. Il couvre l'ensemble du pipeline, de l'**Analyse Exploratoire des Données (EDA)** à la mise en production via un **Dashboard interactif (Panel + Pyodide)**.
 
-## Structure du Projet
-- `BDD/` : Contient le dataset original.
-- `eda_fraud.py` : Script Python pour générer les analyses statiques.
-- `modeling_fraud.py` : Entraînement des modèles ML (Random Forest, XGBoost, Isolation Forest).
-- `predict_fraud.py` : Script de démonstration de prédiction sur de nouvelles données.
-- `dashboard.py` : Code source du tableau de bord interactif.
-- `prep_lite_data.py` : Script de préparation des données pour le web.
-- `docs/` : Dossier contenant la version exportée du dashboard pour GitHub Pages.
-- `models/` : Dossier contenant les modèles entraînés (XGBoost) et les scalers.
-- `evaluation_plots/` : Courbes PR et matrices de confusion.
+Le dataset utilisé contient des transactions effectuées par des titulaires de cartes européennes, où les fraudes ne représentent que **0.172%** de l'ensemble des données, posant un défi majeur de classification déséquilibrée.
 
-## Technologies
-- **Analyse** : Pandas, NumPy, Seaborn, Matplotlib.
-- **Machine Learning** : Scikit-learn, XGBoost, Imbalanced-learn (SMOTE/Stratification).
-- **Dashboard** : Panel, Holoviews, HvPlot, Pyodide/PyScript.
+---
 
-## Modélisation ML
-Nous avons testé trois approches :
-1. **Isolation Forest** : Détection d'anomalies (non supervisé).
-2. **Random Forest** : Classification avec poids de classe équilibrés.
-3. **XGBoost** : Classification avec pondération des classes positives (meilleurs résultats sur l'AUPRC).
+## 📊 Fonctionnalités Clés
+- **EDA Approfondie** : Analyse de la distribution des montants, du temps et des variables PCA (V1-V28).
+- **Modélisation ML Avancée** :
+  - **Isolation Forest** (Non supervisé).
+  - **Random Forest** (Poids de classes ajustés).
+  - **XGBoost** (Optimisé pour l'AUPRC).
+- **Dashboard Interactif** : Une interface web tournant entièrement dans le navigateur (serverless) pour explorer les données en temps réel.
+- **Prédiction en Temps Réel** : Script prêt à l'emploi pour évaluer de nouvelles transactions.
 
-Les modèles sont évalués avec l'**AUPRC (Area Under Precision-Recall Curve)**, car le dataset est extrêmement déséquilibré.
+---
 
-## Comment exécuter
-1. Installer les dépendances : `pip install pandas matplotlib seaborn panel scikit-learn xgboost joblib`
-2. Lancer l'EDA : `python eda_fraud.py`
-3. Lancer la modélisation : `python modeling_fraud.py`
-4. Tester une prédiction : `python predict_fraud.py`
-5. Lancer le dashboard : `panel serve dashboard.py`
+## 🛠️ Installation et Utilisation
 
-## Déploiement du Dashboard (GitHub Pages)
-Pour rendre le dashboard accessible en ligne :
-1. Sur GitHub, allez dans les **Settings** de votre dépôt.
-2. Section **Pages** (menu de gauche).
-3. Sous "Build and deployment" > "Branch", sélectionnez **main** et le dossier **/docs**.
-4. Cliquez sur **Save**.
-   
-Le dashboard sera bientôt disponible à l'adresse : `https://WoodyBOR1.github.io/Credit-Card-Fraud-Detection/`
+### 1. Cloner le projet
+```bash
+git clone https://github.com/WoodyBOR1/Credit-Card-Fraud-Detection.git
+cd Credit-Card-Fraud-Detection
+```
+
+### 2. Installer les dépendances
+```bash
+pip install -r requirements.txt
+```
+*Note : Si le fichier n'est pas présent, utilisez :*
+`pip install pandas matplotlib seaborn panel scikit-learn xgboost joblib hvplot holoviews`
+
+### 3. Exécuter les composants
+- **Générer l'analyse statique** : `python eda_fraud.py`
+- **Entraîner les modèles** : `python modeling_fraud.py`
+- **Lancer le dashboard localement** : `panel serve dashboard.py --show`
+
+---
+
+## 🌐 Déploiement GitHub Pages
+Le dashboard est automatiquement déployé via le dossier `docs/`. 
+Si vous souhaitez le redéployer sur votre propre compte :
+1. Allez dans **Settings** > **Pages**.
+2. Source : **Deploy from a branch**.
+3. Branch : **main** / Folder : **/docs**.
+
+---
+
+## 📈 Résultats et Évaluation
+Étant donné le fort déséquilibre des classes, nous utilisons l'**AUPRC (Area Under Precision-Recall Curve)** comme métrique principale :
+- **XGBoost** a montré la meilleure performance pour identifier les fraudes tout en minimisant les faux positifs.
+- Les visualisations incluses dans le dashboard permettent d'isoler rapidement les variables les plus discriminantes (comme V17, V14 et V12).
+
+---
+
+## 📁 Structure du Dépôt
+- `docs/` : Contient le dashboard web (Index.html + Dataset lite).
+- `models/` : Modèles entraînés et scalers sérialisés.
+- `eda_plots/` & `evaluation_plots/` : Graphiques d'analyse et de performance.
+- `eda_fraud.py`, `modeling_fraud.py`, `dashboard.py` : Scripts sources.
+
+---
+**Développé avec ❤️ par Woody B.**
