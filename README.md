@@ -1,9 +1,5 @@
 # 🛡️ Détection de Fraude sur Carte Bancaire
 
-[![Dashboard](https://img.shields.io/badge/Live-Dashboard-blue?style=for-the-badge&logo=github)](https://WoodyBOR1.github.io/Credit-Card-Fraud-Detection/)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Status](https://img.shields.io/badge/Status-Stable-success?style=for-the-badge)](https://github.com/WoodyBOR1/Credit-Card-Fraud-Detection/)
-
 ## 📝 Présentation du Projet
 Ce projet est une démonstration complète d'un pipeline de **Data Science** appliqué à la sécurité financière. L'objectif est d'identifier les transactions frauduleuses parmi un dataset de transactions anonymisées, tout en gérant le défi majeur du **déséquilibre des classes** (0.17% de fraudes).
 
@@ -70,4 +66,4 @@ panel serve dashboard.py --show
 
 ---
 **Développé par Woody B.** 🚀  
-*Ce projet fait partie d'un portfolio de Data Science.*
+*Ce projet fait partie d'un portfolio de Data Science : https://woodybor1.github.io/Woody-BORGELLA-Portfolio/.*
