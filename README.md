@@ -67,4 +67,4 @@ panel serve dashboard.py --show
 
 ---
 **Développé par Woody B.** 🚀  
-*Ce projet fait partie d'un portfolio de Data Science : https://woodybor1.github.io/Woody-BORGELLA-Portfolio/.*
+*Ce projet fait partie de mon portfolio : https://woodybor1.github.io/Woody-BORGELLA-Portfolio/.*
