@@ -4,7 +4,7 @@
 Analyse avancée d’un dataset fortement déséquilibré pour identifier les comportements frauduleux.
 Création de visualisations exploitables pour optimiser la détection d’anomalies et guider les décisions métier.
 
-👉 Projet basé sur le dataset Kaggle : [Voir ma page GitHub](https://github.com/WoodyBOR1/Credit-Card-Fraud-Detection)
+👉 Projet basé sur le dataset Kaggle : https://www.kaggle.com/datasets/mlgulb/creditcardfraud
 
 ---
 
